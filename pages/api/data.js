@@ -1,8 +1,27 @@
+import config from "../../config.json";
+
 export default async function handler(req, res) {
-  const { cityInput } = req.body;
-  const getWeatherData = await fetch(
-    `https://api.openweathermap.org/data/2.5/weather?q=${cityInput}&units=metric&appid=${process.env.OPENWEATHER_API_KEY}`
-  );
-  const data = await getWeatherData.json();
-  res.status(200).json(data);
+  try {
+    const { city, latitude, longitude } = config;
+
+    // Construire l'URL Open-Meteo
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    // Renvoyer uniquement les infos utiles
+    const current = data.current_weather;
+
+    res.status(200).json({
+      city,
+      temperature: current.temperature,
+      windspeed: current.windspeed,
+      weathercode: current.weathercode,
+      time: current.time,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Impossible de récupérer la météo" });
+  }
 }
